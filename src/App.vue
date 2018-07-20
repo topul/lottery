@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <v-lottery :prizeData="prizeData" :target="target"
+    <v-lottery :prizeData="prizeData"
       @onstart="startRotation" @onstop="stopRotation"></v-lottery>
   </div>
 </template>
@@ -10,24 +10,27 @@ export default {
   name: 'app',
   data() {
     return {
-      prizeData: [
-        { title: '奖品一', color: '#fe807d' },
-        { title: '奖品二', color: '#fe7771' },
-        { title: '奖品三', color: '#fe807d' },
-        { title: '谢谢参与', color: '#fe7771' },
-        { title: '奖品四', color: '#fe807d' },
-        { title: '奖品五', color: '#fe7771' },
-        { title: '奖品六', color: '#fe807d' },
-        { title: '谢谢参与', color: '#fe7771' }
-      ],
-      target: ''
+      prizeData: {
+        data: [
+          { title: '奖品一', color: '#fe807d' },
+          { title: '奖品二', color: '#fe7771' },
+          { title: '奖品三', color: '#fe807d' },
+          { title: '谢谢参与', color: '#fe7771' },
+          { title: '奖品四', color: '#fe807d' },
+          { title: '奖品五', color: '#fe7771' },
+          { title: '奖品六', color: '#fe807d' },
+          { title: '谢谢参与', color: '#fe7771' }
+        ],
+        target: '',
+        bgColor: '#ff5859'
+      }
     }
   },
   methods: {
     startRotation() {
       this.target = ''
         setTimeout(() => {
-        this.target = '奖品四'
+        this.prizeData.target = '奖品四'
       }, 3000)
     },
     stopRotation() {

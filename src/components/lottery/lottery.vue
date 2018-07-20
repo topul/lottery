@@ -1,5 +1,5 @@
 <template>
-<div class="lottery">
+<div class="lottery" :style="{backgroundColor: prizeData.bgColor}">
   <div class="turntable"></div>
   <canvas id="canvas" width="300" height="300" :style="{transform: `rotate(${rotateDeg}deg)`}" :class="[canvasAnimation]"></canvas>
   <img src="./assets/go.png" class="lottery-go" @click.stop="startRotation">
@@ -10,10 +10,14 @@
 export default {
   name: 'VLottery',
   props: {
-    prizeData: { type: Array, default: () => [] },
-    target: String
+    prizeData: {
+      type: Object,
+      default: () => {
+        return { data: [], target: '', bgColor: '#ff5859' }
+      }
+    }
   },
-  data () {
+  data() {
     return {
       width: 300,
       height: 300,
@@ -21,16 +25,10 @@ export default {
       outsideRadius: 140,
       insideRadius: 30,
       textRadius: 105,
-      flag: false,  // 转盘开关
+      flag: false, // 转盘开关
       piece: 0,
       canvasAnimation: '',
-      lotteryTarget: this.target,
       rotateDeg: 0
-    }
-  },
-  watch: {
-    target(val) {
-      this.lotteryTarget = val
     }
   },
   mounted() {
@@ -40,7 +38,7 @@ export default {
     // })
     const canvas = document.getElementById('canvas')
     canvas.addEventListener('animationiteration', e => {
-      if (this.target) {
+      if (this.prizeData.target) {
         // console.log('animationend')
         this.stopRotation()
       }
@@ -61,18 +59,23 @@ export default {
       const ctx = canvas.getContext('2d')
       this.ctx = ctx
 
-      const [w, h, centerX, centerY] = [this.width, this.height, this.width / 2, this.height / 2]
+      const [w, h, centerX, centerY] = [
+        this.width,
+        this.height,
+        this.width / 2,
+        this.height / 2
+      ]
       this.centerX = centerX
       this.centerY = centerY
       const line_height = 17
       // 根据奖品个数计算圆周角度
-      let arc = Math.PI / (this.prizeData.length / 2)
+      let arc = Math.PI / (this.prizeData.data.length / 2)
       this.piece = arc
       ctx.clearRect(0, 0, w, h)
       ctx.strokeStyle = '#e95455'
       ctx.font = '16px Microsoft YaHei'
 
-      this.prizeData.forEach((item, i) => {
+      this.prizeData.data.forEach((item, i) => {
         let angle = this.startAngle + i * arc
         ctx.fillStyle = item.color || '#ef8781'
         ctx.beginPath()
@@ -97,8 +100,8 @@ export default {
     },
     getTargetAngel() {
       // 获取目标角度
-      let idx = this.prizeData.findIndex(item => {
-        return item.title === this.target
+      let idx = this.prizeData.data.findIndex(item => {
+        return item.title === this.prizeData.target
       })
       return this.piece * (idx + 0.5) * 180 / Math.PI
     },
@@ -106,7 +109,6 @@ export default {
     startRotation() {
       // console.log('startRotation')
       this.$emit('onstart')
-      this.lotteryTarget = ''
       this.rotateDeg = 0
       this.canvasAnimation = 'canvas-animaiton'
     },
@@ -130,9 +132,7 @@ export default {
   width: 300px;
   height: 300px;
   position: relative;
-  background-color: #ff5859;
   border-radius: 50%;
-  box-shadow: -1px 2px 4px #ff5758;
 }
 #canvas {
   width: 84%;
@@ -159,20 +159,20 @@ export default {
   top: 50%;
   transform: translate(-50%, -50%);
 }
-@keyframes rotate180 { 
-  from { 
-    transform: rotate(180deg); 
-  } 
-  to { 
-    transform:rotate(0deg); 
-  } 
+@keyframes rotate180 {
+  from {
+    transform: rotate(180deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
 }
-@keyframes rotate360 { 
-  from { 
-    transform: rotate(360deg); 
-  } 
-  to { 
-    transform:rotate(0deg); 
-  } 
+@keyframes rotate360 {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
 }
 </style>
