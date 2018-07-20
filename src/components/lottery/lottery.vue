@@ -1,5 +1,5 @@
 <template>
-<div class="lottery" :style="{backgroundColor: prizeData.bgColor}">
+<div class="lottery" :style="{backgroundColor: mergedData.bgColor}">
   <div class="turntable"></div>
   <canvas id="canvas" width="300" height="300" :style="{transform: `rotate(${rotateDeg}deg)`}" :class="[canvasAnimation]"></canvas>
   <img src="./assets/go.png" class="lottery-go" @click.stop="startRotation">
@@ -12,9 +12,7 @@ export default {
   props: {
     prizeData: {
       type: Object,
-      default: () => {
-        return { data: [], target: '', bgColor: '#ff5859' }
-      }
+      default: () => {}
     }
   },
   data() {
@@ -28,7 +26,17 @@ export default {
       flag: false, // 转盘开关
       piece: 0,
       canvasAnimation: '',
-      rotateDeg: 0
+      rotateDeg: 0,
+      defaultData: { data: [], target: '', bgColor: '#ff5859', dotImage: './assets/dot.png' }
+    }
+  },
+  computed: {
+    // 防止默认值被覆盖
+    mergedData() {
+      return {
+        ...this.defaultData,
+        ...this.prizeData
+      }
     }
   },
   mounted() {
@@ -38,7 +46,7 @@ export default {
     // })
     const canvas = document.getElementById('canvas')
     canvas.addEventListener('animationiteration', e => {
-      if (this.prizeData.target) {
+      if (this.mergedData.target) {
         // console.log('animationend')
         this.stopRotation()
       }
@@ -69,13 +77,13 @@ export default {
       this.centerY = centerY
       const line_height = 17
       // 根据奖品个数计算圆周角度
-      let arc = Math.PI / (this.prizeData.data.length / 2)
+      let arc = Math.PI / (this.mergedData.data.length / 2)
       this.piece = arc
       ctx.clearRect(0, 0, w, h)
       ctx.strokeStyle = '#e95455'
       ctx.font = '16px Microsoft YaHei'
 
-      this.prizeData.data.forEach((item, i) => {
+      this.mergedData.data.forEach((item, i) => {
         let angle = this.startAngle + i * arc
         ctx.fillStyle = item.color || '#ef8781'
         ctx.beginPath()
@@ -88,20 +96,28 @@ export default {
         ctx.stroke()
         ctx.save()
 
-        ctx.fillStyle = '#fff'
-        let x = centerX + Math.cos(angle + arc / 2) * this.textRadius
-        let y = centerY + Math.sin(angle + arc / 2) * this.textRadius
-        // translate重新映射画布上的（0，0）位置
-        ctx.translate(x, y)
-        ctx.rotate(angle + arc / 2 + Math.PI / 2)
-        ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 0)
-        ctx.restore()
+        this.drawTitle(item, angle, arc)
+        this.drawImage()
       })
     },
+    // 绘制奖品名称
+    drawTitle(item, angle, arc) {
+      const ctx = this.ctx
+      ctx.fillStyle = '#fff'
+      let x = this.centerX + Math.cos(angle + arc / 2) * this.textRadius
+      let y = this.centerY + Math.sin(angle + arc / 2) * this.textRadius
+      // translate重新映射画布上的（0，0）位置
+      ctx.translate(x, y)
+      ctx.rotate(angle + arc / 2 + Math.PI / 2)
+      ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 0)
+      ctx.restore()
+    },
+    // 绘制奖品图片
+    drawImage() {},
     getTargetAngel() {
       // 获取目标角度
-      let idx = this.prizeData.data.findIndex(item => {
-        return item.title === this.prizeData.target
+      let idx = this.mergedData.data.findIndex(item => {
+        return item.title === this.mergedData.target
       })
       return this.piece * (idx + 0.5) * 180 / Math.PI
     },
