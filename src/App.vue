@@ -1,31 +1,37 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
-    <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-    <v-lottery :prizeData="prizeData" target="奖金二"></v-lottery>
+    <v-lottery :prizeData="prizeData" :target="target"
+      @onstart="startRotation" @onstop="stopRotation"></v-lottery>
   </div>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
-
 export default {
   name: 'app',
-  // components: {
-  //   HelloWorld
-  // },
-  data () {
+  data() {
     return {
       prizeData: [
-        {title: '奖品一', color: '#fe807d'},
-        {title: '奖品二', color: '#fe7771'},
-        {title: '奖品三', color: '#fe807d'},
-        {title: '谢谢参与', color: '#fe7771'},
-        {title: '奖品四', color: '#fe807d'},
-        {title: '奖品五', color: '#fe7771'},
-        {title: '奖品六', color: '#fe807d'},
-        {title: '谢谢参与', color: '#fe7771'},
-      ]
+        { title: '奖品一', color: '#fe807d' },
+        { title: '奖品二', color: '#fe7771' },
+        { title: '奖品三', color: '#fe807d' },
+        { title: '谢谢参与', color: '#fe7771' },
+        { title: '奖品四', color: '#fe807d' },
+        { title: '奖品五', color: '#fe7771' },
+        { title: '奖品六', color: '#fe807d' },
+        { title: '谢谢参与', color: '#fe7771' }
+      ],
+      target: ''
+    }
+  },
+  methods: {
+    startRotation() {
+      this.target = ''
+        setTimeout(() => {
+        this.target = '奖品四'
+      }, 3000)
+    },
+    stopRotation() {
+      console.log('stopRotation')
     }
   }
 }

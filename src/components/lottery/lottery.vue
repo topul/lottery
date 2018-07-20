@@ -1,6 +1,8 @@
 <template>
-<div>
-  <canvas id="canvas" width="300" height="300"></canvas>
+<div class="lottery">
+  <div class="turntable"></div>
+  <canvas id="canvas" width="300" height="300" :style="{transform: `rotate(${rotateDeg}deg)`}" :class="[canvasAnimation]"></canvas>
+  <img src="./assets/go.png" class="lottery-go" @click.stop="startRotation">
 </div>
 </template>
 
@@ -20,36 +22,40 @@ export default {
       insideRadius: 30,
       textRadius: 105,
       flag: false,  // 转盘开关
-      piece: 0
+      piece: 0,
+      canvasAnimation: '',
+      lotteryTarget: this.target,
+      rotateDeg: 0
     }
   },
-  computed: {
-    targetAngel() {
-      // 获取目标初始角度
-      let idx = this.prizeData.findIndex(item => {
-        return item.title === this.target
-      })
-      console.log(idx)
-      return this.piece * (idx - 0.5)
+  watch: {
+    target(val) {
+      this.lotteryTarget = val
     }
   },
   mounted() {
     this.drawLottery()
-    this._currentTime = 0
-    this._totalTime = Math.random() * 500 + 4000
-    this._finalValue = Math.random() * 20 + 20
-    console.log('this._totalTime, this._finalValue: ', this._totalTime, this._finalValue)
+    // this.$watch('lotteryTarget', () => {
+    //   this.lotteryTarget && this.stopRotation()
+    // })
     const canvas = document.getElementById('canvas')
-    canvas.addEventListener('click', e => {
-      if (this.isInPath(e.offsetX, e.offsetY)) {
-        // 如果点击的是抽奖
-        console.log('before-rotate')
-        this.startRotation()
+    canvas.addEventListener('animationiteration', e => {
+      if (this.target) {
+        // console.log('animationend')
+        this.stopRotation()
       }
     })
-    console.log(this.targetAngel)
+    canvas.addEventListener('transitionend', e => {
+      // console.log('lottery-end')
+      this.$emit('onstop')
+    })
   },
   methods: {
+    // 重置转盘
+    reset() {
+      this.startAngle = 0
+      this.rotateDeg = 0
+    },
     drawLottery() {
       const canvas = document.getElementById('canvas')
       const ctx = canvas.getContext('2d')
@@ -88,91 +94,85 @@ export default {
         ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 0)
         ctx.restore()
       })
-      this.drawArrows()
-      this.drawCenterCircle()
-      this.drawLotteryText()
     },
-    // 绘制箭头
-    drawArrows() {
-      const ctx = this.ctx
-      ctx.strokeStyle = '#FF5722'
-      ctx.fillStyle = '#FF5722'
-      ctx.save()
-      ctx.translate(this.centerX, this.centerY - 26)
-      ctx.moveTo(-10, 0)
-      ctx.beginPath()
-      ctx.lineTo(-10, 0)
-      ctx.lineTo(-10, -20)
-      ctx.lineTo(-20, -20)
-      ctx.lineTo(0, -40)
-      ctx.lineTo(20, -20)
-      ctx.lineTo(10, -20)
-      ctx.lineTo(10, 0)
-      ctx.closePath()
-      ctx.fill()
-      ctx.stroke()
-      ctx.restore()
-    },
-    // 绘制中心圆
-    drawCenterCircle() {
-      const ctx = this.ctx
-      ctx.fillStyle = '#FF5722'
-      ctx.beginPath()
-      ctx.arc(this.centerX, this.centerY, this.insideRadius, 0, 2 * Math.PI, false)
-      ctx.closePath()
-      ctx.fill()
-      ctx.stroke()
-    },
-    // 绘制抽奖文字
-    drawLotteryText() {
-      const ctx = this.ctx
-      ctx.font = '24px Microsoft YaHei'
-      ctx.fillStyle = '#fff'
-      const text = '抽奖'
-      ctx.save()
-      ctx.translate(this.centerX, this.centerY)
-      ctx.fillText(text, -ctx.measureText(text).width / 2, 10)
-      ctx.restore()
-    },
-    // 判断是否在路径内
-    isInPath(x, y) {
-      const ctx = this.ctx
-      ctx.beginPath()
-      ctx.arc(this.centerX, this.centerY, this.insideRadius, 0, 2 * Math.PI)
-      return ctx.isPointInPath(x, y)
+    getTargetAngel() {
+      // 获取目标角度
+      let idx = this.prizeData.findIndex(item => {
+        return item.title === this.target
+      })
+      return this.piece * (idx + 0.5) * 180 / Math.PI
     },
     // 旋转转盘
     startRotation() {
-      console.log('startRotation')
-      this._currentTime += 30
-      if (this._currentTime >= this._totalTime) {
-        this.stopRotation()
-        return
-      }
-      let currentAngle = this._finalValue - this.easeOut(
-        this._currentTime, 0, this._finalValue, this._totalTime
-      )
-      console.log('currentAngle: ', currentAngle)
-      this.startAngle += currentAngle * Math.PI / 180
-      console.log('this.startAngle: ', this.startAngle)
-      this.drawLottery()
-      this.animateID = requestAnimationFrame(this.startRotation)
+      // console.log('startRotation')
+      this.$emit('onstart')
+      this.lotteryTarget = ''
+      this.rotateDeg = 0
+      this.canvasAnimation = 'canvas-animaiton'
     },
     // 停止转盘
     stopRotation() {
-      console.log('stopRotation')
-      cancelAnimationFrame(this.animateID)
-      let arc = this.startAngle + Math.PI / 2
-      let index = this.prizeData.length - 1 - ((arc % (2 * Math.PI) / this.piece) >> 0)
-      console.log(this.prizeData[index].title)
-      this._currentTime = 0
-    },
-    easeOut(t, b, c, d) {
-      return - c * (t /= d) * (t - 2) + b
+      // console.log('stopRotation')
+      let finalDeg = this.getTargetAngel()
+      // this.canvasAnimation = 'animation-transform'
+      // this.rotateDeg = 270 - finalDeg + 360 * 4
+      this.canvasAnimation = ''
+      setTimeout(() => {
+        this.rotateDeg = 270 - finalDeg + 360 * 4
+      }, 0)
     }
   }
 }
 </script>
 
-<style>
+<style scoped>
+.lottery {
+  width: 300px;
+  height: 300px;
+  position: relative;
+  background-color: #ff5859;
+  border-radius: 50%;
+  box-shadow: -1px 2px 4px #ff5758;
+}
+#canvas {
+  width: 84%;
+  position: absolute;
+  top: 8%;
+  left: 8%;
+  transition: transform 6s cubic-bezier(0, 0, 0.54, 1);
+}
+.turntable {
+  height: 100%;
+  background: url('./assets/dot.png') no-repeat center center;
+  background-size: 92%;
+  animation: rotate180 7s linear both reverse infinite;
+}
+.canvas-animaiton {
+  animation: rotate360 0.8s linear both reverse infinite;
+}
+.animation-transform {
+  animation: 0;
+}
+.lottery-go {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+@keyframes rotate180 { 
+  from { 
+    transform: rotate(180deg); 
+  } 
+  to { 
+    transform:rotate(0deg); 
+  } 
+}
+@keyframes rotate360 { 
+  from { 
+    transform: rotate(360deg); 
+  } 
+  to { 
+    transform:rotate(0deg); 
+  } 
+}
 </style>
