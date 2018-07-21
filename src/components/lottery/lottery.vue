@@ -62,6 +62,9 @@ export default {
       this.startAngle = 0
       this.rotateDeg = 0
     },
+    /**
+     * 绘制转盘
+     */
     drawLottery() {
       const canvas = document.getElementById('canvas')
       const ctx = canvas.getContext('2d')
@@ -97,7 +100,7 @@ export default {
         ctx.save()
 
         this.drawTitle(item, angle, arc)
-        this.drawImage()
+        item.src && this.drawImage(item, angle, arc)
       })
     },
     // 绘制奖品名称
@@ -111,9 +114,22 @@ export default {
       ctx.rotate(angle + arc / 2 + Math.PI / 2)
       ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 0)
       ctx.restore()
+      ctx.save()
     },
     // 绘制奖品图片
-    drawImage() {},
+    drawImage(item, angle, arc) {
+      const ctx = this.ctx
+      let x = this.centerX + Math.cos(angle + arc / 2) * this.textRadius
+      let y = this.centerY + Math.sin(angle + arc / 2) * this.textRadius
+      // translate重新映射画布上的（0，0）位置
+      ctx.translate(x, y)
+      ctx.rotate(angle + arc / 2 + Math.PI / 2)
+      const img = new Image()
+      img.src = item.src
+      ctx.drawImage(img, -20, 10, 40, 30)
+      ctx.restore()
+      ctx.save()
+    },
     getTargetAngel() {
       // 获取目标角度
       let idx = this.mergedData.data.findIndex(item => {
