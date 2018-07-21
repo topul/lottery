@@ -62,9 +62,7 @@ export default {
       this.startAngle = 0
       this.rotateDeg = 0
     },
-    /**
-     * 绘制转盘
-     */
+    // 绘制转盘
     drawLottery() {
       const canvas = document.getElementById('canvas')
       const ctx = canvas.getContext('2d')
@@ -103,35 +101,67 @@ export default {
         item.src && this.drawImage(item, angle, arc)
       })
     },
-    // 绘制奖品名称
-    drawTitle(item, angle, arc) {
+    // 重置绘图坐标
+    resetCoordinate(angle, arc) {
       const ctx = this.ctx
-      ctx.fillStyle = '#fff'
       let x = this.centerX + Math.cos(angle + arc / 2) * this.textRadius
       let y = this.centerY + Math.sin(angle + arc / 2) * this.textRadius
       // translate重新映射画布上的（0，0）位置
       ctx.translate(x, y)
       ctx.rotate(angle + arc / 2 + Math.PI / 2)
+    },
+    /**
+     * 绘制奖品名称
+     * @param {Object} item 奖品信息
+     * @param {Number} angle 开始绘制的位置角度
+     * @param {Number} arc 绘制的弧度
+     */
+    drawTitle(item, angle, arc) {
+      const ctx = this.ctx
+      ctx.fillStyle = '#fff'
+      this.resetCoordinate(angle, arc)
       ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 0)
       ctx.restore()
       ctx.save()
     },
-    // 绘制奖品图片
+    /**
+     * 预下载图片
+     * @param {String} url 图片地址
+     * @param {Function} callback
+     * @param {Object} {x: 横坐标, y: 纵坐标, width: 图像宽度, height: 图像高度}
+     */
+    preImage(url,callback, wh) {
+      //创建一个Image对象，实现图片的预下载
+      const img = new Image()
+      img.src = url
+      if (img.complete) {
+        // 如果图片已经存在于浏览器缓存，直接调用回调函数
+        callback.call(img, wh.x, wh.y, wh.width, wh.height)
+        return
+      }
+      img.onload = function() {
+        // 图片下载完毕时异步调用callback函数
+        callback.call(img, wh.x, wh.y, wh.width, wh.height)
+      }
+    },
+    /**
+     * 绘制奖品图片
+     * @param {Object} item 奖品信息
+     * @param {Number} angle 开始绘制的位置角度
+     * @param {Number} arc 绘制的弧度
+     */
     drawImage(item, angle, arc) {
       const ctx = this.ctx
-      let x = this.centerX + Math.cos(angle + arc / 2) * this.textRadius
-      let y = this.centerY + Math.sin(angle + arc / 2) * this.textRadius
-      // translate重新映射画布上的（0，0）位置
-      ctx.translate(x, y)
-      ctx.rotate(angle + arc / 2 + Math.PI / 2)
-      const img = new Image()
-      img.src = item.src
-      ctx.drawImage(img, -20, 10, 40, 30)
-      ctx.restore()
-      ctx.save()
+      const self = this
+      this.preImage(item.src, function (x, y, width, height) {
+        ctx.save()
+        self.resetCoordinate(angle, arc)
+        ctx.drawImage(this, -20, 10, 40, 30)
+        ctx.restore()
+      }, {x: -20, y: 10, width: 40, height: 30})
     },
+    // 获取目标角度
     getTargetAngel() {
-      // 获取目标角度
       let idx = this.mergedData.data.findIndex(item => {
         return item.title === this.mergedData.target
       })
@@ -151,6 +181,7 @@ export default {
       // this.canvasAnimation = 'animation-transform'
       // this.rotateDeg = 270 - finalDeg + 360 * 4
       this.canvasAnimation = ''
+      // 此处若不加延时，则transition动画不会执行
       setTimeout(() => {
         this.rotateDeg = 270 - finalDeg + 360 * 4
       }, 0)
