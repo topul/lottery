@@ -22,7 +22,9 @@ export default {
           { title: '谢谢参与', color: '#fe7771', src: 'http://img13.360buyimg.com/n1/g7/M03/11/16/rBEHZlDdcgAIAAAAAAETXb0oTNQAADdPwG-jPIAARN1548.jpg' }
         ],
         target: '',
-        bgColor: '#ff5859'
+        bgColor: '#ff5859',
+        width: 400,
+        height: 400
       }
     }
   },

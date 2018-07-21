@@ -1,7 +1,7 @@
 <template>
-<div class="lottery" :style="{backgroundColor: mergedData.bgColor}">
+<div class="lottery" :style="{backgroundColor: mergedData.bgColor, width: mergedData.width+'px', height: mergedData.height+'px'}">
   <div class="turntable"></div>
-  <canvas id="canvas" width="300" height="300" :style="{transform: `rotate(${rotateDeg}deg)`}" :class="[canvasAnimation]"></canvas>
+  <canvas id="canvas" :width="mergedData.width" :height="mergedData.height" :style="{transform: `rotate(${rotateDeg}deg)`}" :class="[canvasAnimation]"></canvas>
   <img src="./assets/go.png" class="lottery-go" @click.stop="startRotation">
 </div>
 </template>
@@ -17,20 +17,29 @@ export default {
   },
   data() {
     return {
-      width: 300,
-      height: 300,
       startAngle: 0,
-      outsideRadius: 140,
-      insideRadius: 30,
-      textRadius: 105,
+      // outsideRadius: 140,
+      // textRadius: 105,
       flag: false, // 转盘开关
       piece: 0,
       canvasAnimation: '',
       rotateDeg: 0,
-      defaultData: { data: [], target: '', bgColor: '#ff5859', dotImage: './assets/dot.png' }
+      defaultData: { 
+        data: [], target: '', 
+        bgColor: '#ff5859', 
+        dotImage: './assets/dot.png',
+        width: 300,
+        height: 300,
+      }
     }
   },
   computed: {
+    outsideRadius() {
+      return this.mergedData.width * 13 / 30
+    },
+    textRadius() {
+      return this.mergedData.width * 0.35
+    },
     // 防止默认值被覆盖
     mergedData() {
       return {
@@ -69,10 +78,10 @@ export default {
       this.ctx = ctx
 
       const [w, h, centerX, centerY] = [
-        this.width,
-        this.height,
-        this.width / 2,
-        this.height / 2
+        this.mergedData.width,
+        this.mergedData.height,
+        this.mergedData.width / 2,
+        this.mergedData.height / 2
       ]
       this.centerX = centerX
       this.centerY = centerY
@@ -192,8 +201,6 @@ export default {
 
 <style scoped>
 .lottery {
-  width: 300px;
-  height: 300px;
   position: relative;
   border-radius: 50%;
 }
