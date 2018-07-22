@@ -1,31 +1,31 @@
 <template>
 <div class="lottery" :style="{backgroundColor: mergedData.bgColor, width: mergedData.width+'px', height: mergedData.height+'px'}">
   <div class="turntable"></div>
-  <canvas id="canvas" :width="mergedData.width" :height="mergedData.height" :style="{transform: `rotate(${rotateDeg}deg)`}" :class="[canvasAnimation]"></canvas>
+  <canvas id="canvas" :width="mergedData.width" :height="mergedData.height"></canvas>
   <img src="./assets/go.png" class="lottery-go" @click.stop="startRotation">
 </div>
 </template>
 
 <script>
 export default {
-  name: 'VLottery',
+  name: 'v-lottery',
   props: {
-    prizeData: {
+    data: {
       type: Object,
+      required: true,
       default: () => {}
     }
   },
   data() {
     return {
       startAngle: 0,
-      // outsideRadius: 140,
-      // textRadius: 105,
       flag: false, // 转盘开关
       piece: 0,
       canvasAnimation: '',
       rotateDeg: 0,
       defaultData: { 
-        data: [], target: '', 
+        data: [], 
+        target: '', 
         bgColor: '#ff5859', 
         dotImage: './assets/dot.png',
         width: 300,
@@ -34,9 +34,11 @@ export default {
     }
   },
   computed: {
+    // 大圆盘半径
     outsideRadius() {
       return this.mergedData.width * 13 / 30
     },
+    // 字体离圆心距离
     textRadius() {
       return this.mergedData.width * 0.35
     },
@@ -44,26 +46,16 @@ export default {
     mergedData() {
       return {
         ...this.defaultData,
-        ...this.prizeData
+        ...this.data
       }
     }
   },
   mounted() {
     this.drawLottery()
-    // this.$watch('lotteryTarget', () => {
-    //   this.lotteryTarget && this.stopRotation()
-    // })
+    this.$watch('mergedData.target', () => {
+      this.mergedData.target && this.stopRotation()
+    })
     const canvas = document.getElementById('canvas')
-    canvas.addEventListener('animationiteration', e => {
-      if (this.mergedData.target) {
-        // console.log('animationend')
-        this.stopRotation()
-      }
-    })
-    canvas.addEventListener('transitionend', e => {
-      // console.log('lottery-end')
-      this.$emit('onstop')
-    })
   },
   methods: {
     // 重置转盘
@@ -174,26 +166,33 @@ export default {
       let idx = this.mergedData.data.findIndex(item => {
         return item.title === this.mergedData.target
       })
-      return this.piece * (idx + 0.5) * 180 / Math.PI
+      if (idx !== -1) {
+        return this.piece * (idx + 0.5) * 180 / Math.PI
+      } else {
+        return 360
+      }
     },
     // 旋转转盘
     startRotation() {
-      // console.log('startRotation')
+      if(this.flag) return
       this.$emit('onstart')
-      this.rotateDeg = 0
-      this.canvasAnimation = 'canvas-animaiton'
+      const canvas = document.getElementById('canvas')
+      canvas.style.transition = 'transform 60s ease-in'
+      canvas.style.transform = 'rotate(172800deg)'
+      this.rotateDeg += this.rotateDeg % 360 + 360
+      this.flag = true
     },
     // 停止转盘
     stopRotation() {
-      // console.log('stopRotation')
       let finalDeg = this.getTargetAngel()
-      // this.canvasAnimation = 'animation-transform'
-      // this.rotateDeg = 270 - finalDeg + 360 * 4
-      this.canvasAnimation = ''
-      // 此处若不加延时，则transition动画不会执行
+      const canvas = document.getElementById('canvas')
+      canvas.style.transition = 'transform 3s ease-out'
+      this.rotateDeg += 270 - finalDeg + (360 - this.rotateDeg % 360) + 1800
+      canvas.style.transform = `rotate(${this.rotateDeg}deg)`
       setTimeout(() => {
-        this.rotateDeg = 270 - finalDeg + 360 * 4
-      }, 0)
+        this.flag = false
+        this.$emit('onstop')
+      }, 3000)
     }
   }
 }
@@ -209,19 +208,20 @@ export default {
   position: absolute;
   top: 8%;
   left: 8%;
-  transition: transform 6s cubic-bezier(0, 0, 0.54, 1);
+  /* transition: transform 2s linear; */
+  /* cubic-bezier(0.48, 0.76, 0.49, 0.97) */
+  /* let the browser know we plan to animate
+     each view in and out */
+  will-change: transform;
 }
 .turntable {
   height: 100%;
   background: url('./assets/dot.png') no-repeat center center;
   background-size: 92%;
   animation: rotate180 7s linear both reverse infinite;
-}
-.canvas-animaiton {
-  animation: rotate360 0.8s linear both reverse infinite;
-}
-.animation-transform {
-  animation: 0;
+  /* let the browser know we plan to animate
+     each view in and out */
+  will-change: transform;
 }
 .lottery-go {
   position: absolute;
@@ -232,14 +232,6 @@ export default {
 @keyframes rotate180 {
   from {
     transform: rotate(180deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
-}
-@keyframes rotate360 {
-  from {
-    transform: rotate(360deg);
   }
   to {
     transform: rotate(0deg);
