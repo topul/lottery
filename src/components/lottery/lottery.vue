@@ -21,7 +21,6 @@ export default {
       startAngle: 0,
       flag: false, // 转盘开关
       piece: 0,
-      canvasAnimation: '',
       rotateDeg: 0,
       defaultData: { 
         data: [], 
