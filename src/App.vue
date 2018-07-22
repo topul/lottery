@@ -32,8 +32,8 @@ export default {
     startRotation() {
       this.awardsData.target = ''
         setTimeout(() => {
-          this.awardsData.target = 'null'
-        }, 3000)
+          this.awardsData.target = '奖品四'
+        }, 1000)
     },
     stopRotation() {
       console.log('stopRotation')

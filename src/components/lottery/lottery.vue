@@ -52,7 +52,14 @@ export default {
   mounted() {
     this.drawLottery()
     this.$watch('mergedData.target', () => {
-      this.mergedData.target && this.stopRotation()
+      if(this.mergedData.target){
+        this._processTime = new Date().getTime()
+        let timer = Math.floor((this._processTime - this._startTime) / 1000)
+        let stopTime = timer < 2 ? 2 : 0
+        setTimeout(() => {
+          this.stopRotation()
+        }, stopTime * 1000)
+      }
     })
     const canvas = document.getElementById('canvas')
   },
@@ -176,18 +183,21 @@ export default {
       if(this.flag) return
       this.$emit('onstart')
       const canvas = document.getElementById('canvas')
-      canvas.style.transition = 'transform 60s ease-in'
-      canvas.style.transform = 'rotate(172800deg)'
-      this.rotateDeg += this.rotateDeg % 360 + 360
+      canvas.style.transition = 'all 30s ease-in'
+      canvas.style.transform = 'rotate(54000deg)'
+      canvas.style.webkitTransform = 'rotate(54000deg)'
+      this._startTime = new Date().getTime()
       this.flag = true
     },
     // 停止转盘
     stopRotation() {
       let finalDeg = this.getTargetAngel()
       const canvas = document.getElementById('canvas')
-      canvas.style.transition = 'transform 3s ease-out'
-      this.rotateDeg += 270 - finalDeg + (360 - this.rotateDeg % 360) + 1800
+      canvas.style.transition = 'all 4s cubic-bezier(0.39, 0.575, 0.565, 1)'
+      this._endTime = new Date().getTime()
+      this.rotateDeg += 270 - finalDeg + (360 - this.rotateDeg % 360) + Math.floor((this._endTime - this._startTime) / 1000) * 1800
       canvas.style.transform = `rotate(${this.rotateDeg}deg)`
+      canvas.style.webkitTransform = `rotate(${this.rotateDeg}deg)`
       setTimeout(() => {
         this.flag = false
         this.$emit('onstop')
