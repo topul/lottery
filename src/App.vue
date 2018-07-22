@@ -24,7 +24,8 @@ export default {
         target: '',
         bgColor: '#ff5859',
         width: 400,
-        height: 400
+        height: 400,
+        goImage: require('./static/go.png')
       }
     }
   },

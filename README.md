@@ -24,7 +24,8 @@ data() {
             target: '', // 所获奖品名称
             bgColor: '#ff5859', // 外环背景色
             width: 400,
-            height: 400
+            height: 400,
+            goImage: require('./static/go.png')  //传图片地址一定要用require，否则无法解析路径
         }
     }
 }
@@ -36,3 +37,4 @@ onstop：转盘停止转动，可是提示所得奖品并进行后续操作
 若网络请求错误或其它未知异常，可给target随便传一个不为奖品的字符串
 
 **TIPS：由于组件是依赖target的变化判断是否有结果的，为防止两次抽奖结果一致无法触发更新，在每次抽奖前，需手动将target置为空**
+

@@ -1,8 +1,8 @@
 <template>
 <div class="lottery" :style="{backgroundColor: mergedData.bgColor, width: mergedData.width+'px', height: mergedData.height+'px'}">
-  <div class="turntable"></div>
+  <div class="turntable" :style="{background: `url('${mergedData.dotImage}') no-repeat center center / 92%`}"></div>
   <canvas id="canvas" :width="mergedData.width" :height="mergedData.height"></canvas>
-  <img src="./assets/go.png" class="lottery-go" @click.stop="startRotation">
+  <img :src="mergedData.goImage" class="lottery-go" @click.stop="startRotation">
 </div>
 </template>
 
@@ -26,9 +26,10 @@ export default {
         data: [], 
         target: '', 
         bgColor: '#ff5859', 
-        dotImage: './assets/dot.png',
+        dotImage: require('./assets/dot.png'),
+        goImage: require('./assets/go.png'),
         width: 300,
-        height: 300,
+        height: 300
       }
     }
   },
@@ -225,8 +226,6 @@ export default {
 }
 .turntable {
   height: 100%;
-  background: url('./assets/dot.png') no-repeat center center;
-  background-size: 92%;
   animation: rotate180 7s linear both reverse infinite;
   /* let the browser know we plan to animate
      each view in and out */
@@ -234,6 +233,7 @@ export default {
 }
 .lottery-go {
   position: absolute;
+  width: 25%;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
