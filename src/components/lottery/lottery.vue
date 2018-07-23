@@ -52,6 +52,7 @@ export default {
   },
   mounted() {
     this.drawLottery()
+    // 监听所获奖品的值，故父元素每次转动时需手动清除原有的奖品值
     this.$watch('mergedData.target', () => {
       if(this.mergedData.target){
         this._processTime = new Date().getTime()
