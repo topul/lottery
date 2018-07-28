@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <v-lottery :prizeData="prizeData"
+    <v-lottery :data="awardsData"
       @onstart="startRotation" @onstop="stopRotation"></v-lottery>
   </div>
 </template>
@@ -10,7 +10,7 @@ export default {
   name: 'app',
   data() {
     return {
-      prizeData: {
+      awardsData: {
         data: [
           { title: '奖品一', color: '#fe807d', src: 'http://img13.360buyimg.com/n1/g7/M03/11/16/rBEHZlDdcgAIAAAAAAETXb0oTNQAADdPwG-jPIAARN1548.jpg' },
           { title: '奖品二', color: '#fe7771', src: 'http://img13.360buyimg.com/n1/g7/M03/11/16/rBEHZlDdcgAIAAAAAAETXb0oTNQAADdPwG-jPIAARN1548.jpg' },
@@ -24,16 +24,17 @@ export default {
         target: '',
         bgColor: '#ff5859',
         width: 400,
-        height: 400
+        height: 400,
+        goImage: require('./static/go.png')
       }
     }
   },
   methods: {
     startRotation() {
-      this.target = ''
+      this.awardsData.target = ''
         setTimeout(() => {
-        this.prizeData.target = '奖品四'
-      }, 3000)
+          this.awardsData.target = '奖品四'
+        }, 1000)
     },
     stopRotation() {
       console.log('stopRotation')

@@ -1,42 +1,48 @@
 <template>
-<div class="lottery" :style="{backgroundColor: mergedData.bgColor, width: mergedData.width+'px', height: mergedData.height+'px'}">
-  <div class="turntable"></div>
-  <canvas id="canvas" :width="mergedData.width" :height="mergedData.height" :style="{transform: `rotate(${rotateDeg}deg)`}" :class="[canvasAnimation]"></canvas>
-  <img src="./assets/go.png" class="lottery-go" @click.stop="startRotation">
+<div class="lottery" :style="{backgroundColor: mergedData.bgColor}">
+  <div class="turntable" :style="{background: `url('${mergedData.dotImage}') no-repeat center center / 92%`}"></div>
+  <canvas id="canvas" :width="mergedData.width" :height="mergedData.height" :style="{transform: `rotate(${rotateDeg}deg)`}"></canvas>
+  <img :src="mergedData.goImage" class="lottery-go" @click.stop="startRotation">
 </div>
 </template>
 
 <script>
 export default {
-  name: 'VLottery',
+  name: 'v-lottery',
   props: {
-    prizeData: {
+    data: {
       type: Object,
+      required: true,
       default: () => {}
-    }
+    },
+    disabled: Boolean
   },
   data() {
     return {
-      startAngle: 0,
-      // outsideRadius: 140,
-      // textRadius: 105,
       flag: false, // 转盘开关
       piece: 0,
-      canvasAnimation: '',
       rotateDeg: 0,
-      defaultData: { 
-        data: [], target: '', 
-        bgColor: '#ff5859', 
-        dotImage: './assets/dot.png',
-        width: 300,
-        height: 300,
+      defaultData: {
+        data: [],
+        target: '',
+        bgColor: '#ff5859',
+        dotImage: require('./assets/dot.png'),
+        goImage: require('./assets/go.png'),
+        width: 350,
+        height: 350
       }
     }
   },
   computed: {
+    startAngle() {
+      const areaArc = 360 / this.mergedData.data.length / 2
+      return areaArc * Math.PI / 180
+    },
+    // 大圆盘半径
     outsideRadius() {
       return this.mergedData.width * 13 / 30
     },
+    // 字体离圆心距离
     textRadius() {
       return this.mergedData.width * 0.35
     },
@@ -44,37 +50,54 @@ export default {
     mergedData() {
       return {
         ...this.defaultData,
-        ...this.prizeData
+        ...this.data
       }
     }
   },
+  watch: {
+    disabled(val) {
+      this.flag = val
+    }
+  },
   mounted() {
+    this.setLotteryHeight()
+    window.addEventListener('resize', () => {
+      this.setLotteryHeight()
+    })
     this.drawLottery()
-    // this.$watch('lotteryTarget', () => {
-    //   this.lotteryTarget && this.stopRotation()
-    // })
-    const canvas = document.getElementById('canvas')
-    canvas.addEventListener('animationiteration', e => {
+    this.$watch('mergedData.target', () => {
       if (this.mergedData.target) {
-        // console.log('animationend')
-        this.stopRotation()
+        let finalDeg = this.getTargetAngel()
+        this.rotateDeg += 270 - finalDeg + (360 - this.rotateDeg % 360) + 1800
       }
     })
-    canvas.addEventListener('transitionend', e => {
-      // console.log('lottery-end')
+    const canvas = document.getElementById('canvas')
+    canvas.addEventListener('transitionend', () => {
+      this.flag = false
       this.$emit('onstop')
     })
   },
   methods: {
-    // 重置转盘
-    reset() {
-      this.startAngle = 0
-      this.rotateDeg = 0
+    // 设置转盘的高，使其与宽相等
+    setLotteryHeight() {
+      const lottery = document.querySelector('.lottery')
+      lottery.style.height = lottery.clientWidth + 'px'
     },
     // 绘制转盘
     drawLottery() {
       const canvas = document.getElementById('canvas')
       const ctx = canvas.getContext('2d')
+      let devicePixelRatio = window.devicePixelRatio || 1
+      let backingStoreRatio = ctx.webkitBackingStorePixelRatio ||
+        ctx.mozBackingStorePixelRatio ||
+        ctx.msBackingStorePixelRatio ||
+        ctx.oBackingStorePixelRatio ||
+        ctx.backingStorePixelRatio || 1
+      let ratio = devicePixelRatio / backingStoreRatio
+      canvas.width = canvas.width * ratio
+      canvas.height = canvas.height* ratio
+      ctx.scale(ratio, ratio)
+      ctx.translate(0.5, 0.5)
       this.ctx = ctx
 
       const [w, h, centerX, centerY] = [
@@ -90,12 +113,12 @@ export default {
       let arc = Math.PI / (this.mergedData.data.length / 2)
       this.piece = arc
       ctx.clearRect(0, 0, w, h)
-      ctx.strokeStyle = '#e95455'
+      ctx.strokeStyle = 'transparent'
       ctx.font = '16px Microsoft YaHei'
 
       this.mergedData.data.forEach((item, i) => {
         let angle = this.startAngle + i * arc
-        ctx.fillStyle = item.color || '#ef8781'
+        ctx.fillStyle = item.color || 'transparent'
         ctx.beginPath()
         ctx.moveTo(centerX, centerY)
 
@@ -127,11 +150,28 @@ export default {
      */
     drawTitle(item, angle, arc) {
       const ctx = this.ctx
-      ctx.fillStyle = '#fff'
+      ctx.fillStyle = '#ffffff'
+      ctx.font="12px 宋体"
       this.resetCoordinate(angle, arc)
-      ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 0)
+      ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 50)
       ctx.restore()
       ctx.save()
+    },
+    // 根据图片宽高比计算图片的宽高和位置
+    calcImgSize(img) {
+      let [width, height, x, y] = []
+      if (img.width > img.height) {
+        width = 60
+        height = 60 * img.height / img.width
+        x = -30
+        y = -15
+      } else {
+        height = 50
+        width = 50 * img.width / img.height
+        x = -20
+        y = -15
+      }
+      return [width, height, x, y]
     },
     /**
      * 预下载图片
@@ -139,18 +179,20 @@ export default {
      * @param {Function} callback
      * @param {Object} {x: 横坐标, y: 纵坐标, width: 图像宽度, height: 图像高度}
      */
-    preImage(url,callback, wh) {
+    preImage(url, callback) {
       //创建一个Image对象，实现图片的预下载
       const img = new Image()
       img.src = url
       if (img.complete) {
+        const [width, height, x, y] = this.calcImgSize(img)
         // 如果图片已经存在于浏览器缓存，直接调用回调函数
-        callback.call(img, wh.x, wh.y, wh.width, wh.height)
+        callback.call(img, x, y, width, height)
         return
       }
-      img.onload = function() {
+      img.onload = () => {
+        const [width, height, x, y] = this.calcImgSize(img)
         // 图片下载完毕时异步调用callback函数
-        callback.call(img, wh.x, wh.y, wh.width, wh.height)
+        callback.call(img, x, y, width, height)
       }
     },
     /**
@@ -162,38 +204,33 @@ export default {
     drawImage(item, angle, arc) {
       const ctx = this.ctx
       const self = this
-      this.preImage(item.src, function (x, y, width, height) {
-        ctx.save()
-        self.resetCoordinate(angle, arc)
-        ctx.drawImage(this, -20, 10, 40, 30)
-        ctx.restore()
-      }, {x: -20, y: 10, width: 40, height: 30})
+      this.preImage(
+        item.src,
+        function(x, y, width, height) {
+          ctx.save()
+          self.resetCoordinate(angle, arc)
+          ctx.drawImage(this, x, y, width, height)
+          ctx.restore()
+        }
+      )
     },
     // 获取目标角度
     getTargetAngel() {
       let idx = this.mergedData.data.findIndex(item => {
-        return item.title === this.mergedData.target
+        return item.rewardId === this.mergedData.target
       })
-      return this.piece * (idx + 0.5) * 180 / Math.PI
+      if (idx !== -1) {
+        return (this.piece * (idx + 0.5) + this.startAngle) * 180 / Math.PI
+      } else {
+        return 360
+      }
     },
-    // 旋转转盘
+    // 开始旋转
     startRotation() {
-      // console.log('startRotation')
-      this.$emit('onstart')
-      this.rotateDeg = 0
-      this.canvasAnimation = 'canvas-animaiton'
-    },
-    // 停止转盘
-    stopRotation() {
-      // console.log('stopRotation')
-      let finalDeg = this.getTargetAngel()
-      // this.canvasAnimation = 'animation-transform'
-      // this.rotateDeg = 270 - finalDeg + 360 * 4
-      this.canvasAnimation = ''
-      // 此处若不加延时，则transition动画不会执行
-      setTimeout(() => {
-        this.rotateDeg = 270 - finalDeg + 360 * 4
-      }, 0)
+      if (!this.flag) {
+        this.$emit('onstart')
+        this.flag = true
+      }
     }
   }
 }
@@ -202,44 +239,40 @@ export default {
 <style scoped>
 .lottery {
   position: relative;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
 }
 #canvas {
-  width: 84%;
+  width: 92%;
+  /* height: 92%; */
   position: absolute;
-  top: 8%;
-  left: 8%;
-  transition: transform 6s cubic-bezier(0, 0, 0.54, 1);
+  top: 4%;
+  left: 4%;
+  transition: transform 5s ease-in-out;
+  /* cubic-bezier(0.48, 0.76, 0.49, 0.97) */
+  /* let the browser know we plan to animate
+     each view in and out */
+  will-change: transform;
 }
 .turntable {
   height: 100%;
-  background: url('./assets/dot.png') no-repeat center center;
-  background-size: 92%;
   animation: rotate180 7s linear both reverse infinite;
-}
-.canvas-animaiton {
-  animation: rotate360 0.8s linear both reverse infinite;
-}
-.animation-transform {
-  animation: 0;
+  /* let the browser know we plan to animate
+     each view in and out */
+  will-change: transform;
 }
 .lottery-go {
   position: absolute;
+  width: 20%;
   left: 50%;
-  top: 50%;
+  top: 47%;
+  z-index: 1;
   transform: translate(-50%, -50%);
 }
 @keyframes rotate180 {
   from {
     transform: rotate(180deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
-}
-@keyframes rotate360 {
-  from {
-    transform: rotate(360deg);
   }
   to {
     transform: rotate(0deg);
