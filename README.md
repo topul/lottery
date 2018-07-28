@@ -1,4 +1,7 @@
 ### 轮盘抽奖程序
+
+![](http://chuantu.biz/t6/349/1532743724x-1566688269.png)
+
 使用方法：
 ```javascript
 import VLottery from './components/lottery'
