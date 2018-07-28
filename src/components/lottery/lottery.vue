@@ -1,7 +1,7 @@
 <template>
-<div class="lottery" :style="{backgroundColor: mergedData.bgColor, width: mergedData.width+'px', height: mergedData.height+'px'}">
+<div class="lottery" :style="{backgroundColor: mergedData.bgColor}">
   <div class="turntable" :style="{background: `url('${mergedData.dotImage}') no-repeat center center / 92%`}"></div>
-  <canvas id="canvas" :width="mergedData.width" :height="mergedData.height"></canvas>
+  <canvas id="canvas" :width="mergedData.width" :height="mergedData.height" :style="{transform: `rotate(${rotateDeg}deg)`}"></canvas>
   <img :src="mergedData.goImage" class="lottery-go" @click.stop="startRotation">
 </div>
 </template>
@@ -14,26 +14,30 @@ export default {
       type: Object,
       required: true,
       default: () => {}
-    }
+    },
+    disabled: Boolean
   },
   data() {
     return {
-      startAngle: 0,
       flag: false, // 转盘开关
       piece: 0,
       rotateDeg: 0,
-      defaultData: { 
-        data: [], 
-        target: '', 
-        bgColor: '#ff5859', 
+      defaultData: {
+        data: [],
+        target: '',
+        bgColor: '#ff5859',
         dotImage: require('./assets/dot.png'),
         goImage: require('./assets/go.png'),
-        width: 300,
-        height: 300
+        width: 350,
+        height: 350
       }
     }
   },
   computed: {
+    startAngle() {
+      const areaArc = 360 / this.mergedData.data.length / 2
+      return areaArc * Math.PI / 180
+    },
     // 大圆盘半径
     outsideRadius() {
       return this.mergedData.width * 13 / 30
@@ -50,31 +54,50 @@ export default {
       }
     }
   },
+  watch: {
+    disabled(val) {
+      this.flag = val
+    }
+  },
   mounted() {
+    this.setLotteryHeight()
+    window.addEventListener('resize', () => {
+      this.setLotteryHeight()
+    })
     this.drawLottery()
-    // 监听所获奖品的值，故父元素每次转动时需手动清除原有的奖品值
     this.$watch('mergedData.target', () => {
-      if(this.mergedData.target){
-        this._processTime = new Date().getTime()
-        let timer = Math.floor((this._processTime - this._startTime) / 1000)
-        let stopTime = timer < 2 ? 2 : 0
-        setTimeout(() => {
-          this.stopRotation()
-        }, stopTime * 1000)
+      if (this.mergedData.target) {
+        let finalDeg = this.getTargetAngel()
+        this.rotateDeg += 270 - finalDeg + (360 - this.rotateDeg % 360) + 1800
       }
     })
     const canvas = document.getElementById('canvas')
+    canvas.addEventListener('transitionend', () => {
+      this.flag = false
+      this.$emit('onstop')
+    })
   },
   methods: {
-    // 重置转盘
-    reset() {
-      this.startAngle = 0
-      this.rotateDeg = 0
+    // 设置转盘的高，使其与宽相等
+    setLotteryHeight() {
+      const lottery = document.querySelector('.lottery')
+      lottery.style.height = lottery.clientWidth + 'px'
     },
     // 绘制转盘
     drawLottery() {
       const canvas = document.getElementById('canvas')
       const ctx = canvas.getContext('2d')
+      let devicePixelRatio = window.devicePixelRatio || 1
+      let backingStoreRatio = ctx.webkitBackingStorePixelRatio ||
+        ctx.mozBackingStorePixelRatio ||
+        ctx.msBackingStorePixelRatio ||
+        ctx.oBackingStorePixelRatio ||
+        ctx.backingStorePixelRatio || 1
+      let ratio = devicePixelRatio / backingStoreRatio
+      canvas.width = canvas.width * ratio
+      canvas.height = canvas.height* ratio
+      ctx.scale(ratio, ratio)
+      ctx.translate(0.5, 0.5)
       this.ctx = ctx
 
       const [w, h, centerX, centerY] = [
@@ -90,12 +113,12 @@ export default {
       let arc = Math.PI / (this.mergedData.data.length / 2)
       this.piece = arc
       ctx.clearRect(0, 0, w, h)
-      ctx.strokeStyle = '#e95455'
+      ctx.strokeStyle = 'transparent'
       ctx.font = '16px Microsoft YaHei'
 
       this.mergedData.data.forEach((item, i) => {
         let angle = this.startAngle + i * arc
-        ctx.fillStyle = item.color || '#ef8781'
+        ctx.fillStyle = item.color || 'transparent'
         ctx.beginPath()
         ctx.moveTo(centerX, centerY)
 
@@ -127,11 +150,28 @@ export default {
      */
     drawTitle(item, angle, arc) {
       const ctx = this.ctx
-      ctx.fillStyle = '#fff'
+      ctx.fillStyle = '#ffffff'
+      ctx.font="12px 宋体"
       this.resetCoordinate(angle, arc)
-      ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 0)
+      ctx.fillText(item.title, -ctx.measureText(item.title).width / 2, 50)
       ctx.restore()
       ctx.save()
+    },
+    // 根据图片宽高比计算图片的宽高和位置
+    calcImgSize(img) {
+      let [width, height, x, y] = []
+      if (img.width > img.height) {
+        width = 60
+        height = 60 * img.height / img.width
+        x = -30
+        y = -15
+      } else {
+        height = 50
+        width = 50 * img.width / img.height
+        x = -20
+        y = -15
+      }
+      return [width, height, x, y]
     },
     /**
      * 预下载图片
@@ -139,18 +179,20 @@ export default {
      * @param {Function} callback
      * @param {Object} {x: 横坐标, y: 纵坐标, width: 图像宽度, height: 图像高度}
      */
-    preImage(url,callback, wh) {
+    preImage(url, callback) {
       //创建一个Image对象，实现图片的预下载
       const img = new Image()
       img.src = url
       if (img.complete) {
+        const [width, height, x, y] = this.calcImgSize(img)
         // 如果图片已经存在于浏览器缓存，直接调用回调函数
-        callback.call(img, wh.x, wh.y, wh.width, wh.height)
+        callback.call(img, x, y, width, height)
         return
       }
-      img.onload = function() {
+      img.onload = () => {
+        const [width, height, x, y] = this.calcImgSize(img)
         // 图片下载完毕时异步调用callback函数
-        callback.call(img, wh.x, wh.y, wh.width, wh.height)
+        callback.call(img, x, y, width, height)
       }
     },
     /**
@@ -162,48 +204,33 @@ export default {
     drawImage(item, angle, arc) {
       const ctx = this.ctx
       const self = this
-      this.preImage(item.src, function (x, y, width, height) {
-        ctx.save()
-        self.resetCoordinate(angle, arc)
-        ctx.drawImage(this, -20, 10, 40, 30)
-        ctx.restore()
-      }, {x: -20, y: 10, width: 40, height: 30})
+      this.preImage(
+        item.src,
+        function(x, y, width, height) {
+          ctx.save()
+          self.resetCoordinate(angle, arc)
+          ctx.drawImage(this, x, y, width, height)
+          ctx.restore()
+        }
+      )
     },
     // 获取目标角度
     getTargetAngel() {
       let idx = this.mergedData.data.findIndex(item => {
-        return item.title === this.mergedData.target
+        return item.rewardId === this.mergedData.target
       })
       if (idx !== -1) {
-        return this.piece * (idx + 0.5) * 180 / Math.PI
+        return (this.piece * (idx + 0.5) + this.startAngle) * 180 / Math.PI
       } else {
         return 360
       }
     },
-    // 旋转转盘
+    // 开始旋转
     startRotation() {
-      if(this.flag) return
-      this.$emit('onstart')
-      const canvas = document.getElementById('canvas')
-      canvas.style.transition = 'all 30s ease-in'
-      canvas.style.transform = 'rotate(54000deg)'
-      canvas.style.webkitTransform = 'rotate(54000deg)'
-      this._startTime = new Date().getTime()
-      this.flag = true
-    },
-    // 停止转盘
-    stopRotation() {
-      let finalDeg = this.getTargetAngel()
-      const canvas = document.getElementById('canvas')
-      canvas.style.transition = 'all 4s cubic-bezier(0.39, 0.575, 0.565, 1)'
-      this._endTime = new Date().getTime()
-      this.rotateDeg += 270 - finalDeg + (360 - this.rotateDeg % 360) + Math.floor((this._endTime - this._startTime) / 1000) * 1800
-      canvas.style.transform = `rotate(${this.rotateDeg}deg)`
-      canvas.style.webkitTransform = `rotate(${this.rotateDeg}deg)`
-      setTimeout(() => {
-        this.flag = false
-        this.$emit('onstop')
-      }, 3000)
+      if (!this.flag) {
+        this.$emit('onstart')
+        this.flag = true
+      }
     }
   }
 }
@@ -212,14 +239,17 @@ export default {
 <style scoped>
 .lottery {
   position: relative;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
 }
 #canvas {
-  width: 84%;
+  width: 92%;
+  /* height: 92%; */
   position: absolute;
-  top: 8%;
-  left: 8%;
-  /* transition: transform 2s linear; */
+  top: 4%;
+  left: 4%;
+  transition: transform 5s ease-in-out;
   /* cubic-bezier(0.48, 0.76, 0.49, 0.97) */
   /* let the browser know we plan to animate
      each view in and out */
@@ -234,9 +264,10 @@ export default {
 }
 .lottery-go {
   position: absolute;
-  width: 25%;
+  width: 20%;
   left: 50%;
-  top: 50%;
+  top: 47%;
+  z-index: 1;
   transform: translate(-50%, -50%);
 }
 @keyframes rotate180 {
