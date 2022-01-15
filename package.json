@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": false,
   "main": "lib/tp-lottery.umd.min.js",
-  "keyword": "vue lottery 抽奖 转盘",
+  "keywords": ["vue", "lottery", "抽奖", "转盘"],
   "description": "vue抽奖插件",
   "scripts": {
     "serve": "vue-cli-service serve",
