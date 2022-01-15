@@ -5,6 +5,10 @@
   "main": "lib/tp-lottery.umd.min.js",
   "keywords": ["vue", "lottery", "抽奖", "转盘"],
   "description": "vue抽奖插件",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/topul/lottery.git"
+  },
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
