@@ -108,7 +108,6 @@ export default {
       ]
       this.centerX = centerX
       this.centerY = centerY
-      const line_height = 17
       // 根据奖品个数计算圆周角度
       let arc = Math.PI / (this.mergedData.data.length / 2)
       this.piece = arc

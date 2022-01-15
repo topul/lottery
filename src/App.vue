@@ -37,7 +37,7 @@ export default {
         }, 1000)
     },
     stopRotation() {
-      console.log('stopRotation')
+      alert('stopRotation')
     }
   }
 }
