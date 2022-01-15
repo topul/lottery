@@ -1,5 +1,6 @@
 ### 轮盘抽奖程序
 ![微信截图_20220115203843](https://user-images.githubusercontent.com/8213229/149622123-dd3134e1-3c3a-432b-91c7-6c8bacc62916.png)
+
 使用方法：
 ```javascript
 import VLottery from './components/lottery'
