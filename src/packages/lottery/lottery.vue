@@ -15,6 +15,11 @@ export default {
       required: true,
       default: () => {}
     },
+    value: {
+      type: [Number, String],
+      required: true,
+      default: ''
+    },
     disabled: Boolean
   },
   data() {
@@ -24,7 +29,6 @@ export default {
       rotateDeg: 0,
       defaultData: {
         data: [],
-        target: '',
         bgColor: '#ff5859',
         dotImage: require('./assets/dot.png'),
         goImage: require('./assets/go.png'),
@@ -36,7 +40,7 @@ export default {
   computed: {
     startAngle() {
       const areaArc = 360 / this.mergedData.data.length / 2
-      return areaArc * Math.PI / 180
+      return areaArc * Math.PI / 90
     },
     // 大圆盘半径
     outsideRadius() {
@@ -57,6 +61,12 @@ export default {
   watch: {
     disabled(val) {
       this.flag = val
+    },
+    value(val) {
+      if (val) {
+        let finalDeg = this.getTargetAngel()
+        this.rotateDeg += 270 - finalDeg + (360 - this.rotateDeg % 360) + 1800
+      }
     }
   },
   mounted() {
@@ -65,12 +75,6 @@ export default {
       this.setLotteryHeight()
     })
     this.drawLottery()
-    this.$watch('mergedData.target', () => {
-      if (this.mergedData.target) {
-        let finalDeg = this.getTargetAngel()
-        this.rotateDeg += 270 - finalDeg + (360 - this.rotateDeg % 360) + 1800
-      }
-    })
     const canvas = document.getElementById('canvas')
     canvas.addEventListener('transitionend', () => {
       this.flag = false
@@ -216,7 +220,7 @@ export default {
     // 获取目标角度
     getTargetAngel() {
       let idx = this.mergedData.data.findIndex(item => {
-        return item.rewardId === this.mergedData.target
+        return item.rewardId === this.value
       })
       if (idx !== -1) {
         return (this.piece * (idx + 0.5) + this.startAngle) * 180 / Math.PI
@@ -227,6 +231,7 @@ export default {
     // 开始旋转
     startRotation() {
       if (!this.flag) {
+        this.$emit('input', '')
         this.$emit('onstart')
         this.flag = true
       }
