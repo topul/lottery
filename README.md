@@ -3,11 +3,11 @@
 
 使用方法：
 ```javascript
-import VLottery from './components/lottery'
-Vue.use(VLottery)
+import TpLottery from 'tp-lottery'
+Vue.use(TpLottery)
 
-<v-lottery :data="awardsData" v-model="target"
-      @onstart="startRotation" @onstop="stopRotation"></v-lottery>
+<tp-lottery :data="awardsData" v-model="target"
+      @onstart="startRotation" @onstop="stopRotation"></-lottery>
 
 data() {
     return {
