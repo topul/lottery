@@ -1,4 +1,5 @@
-### 轮盘抽奖程序
+# 轮盘抽奖程序
+
 ![轮盘抽奖](https://user-images.githubusercontent.com/8213229/149622123-dd3134e1-3c3a-432b-91c7-6c8bacc62916.png)
 
 安装：
@@ -8,6 +9,7 @@ npm i tp-lottery
 ```
 
 使用：
+
 1、在main.js中引入
 
 ```javascript
@@ -21,7 +23,9 @@ Vue.use(TpLottery)
 <tp-lottery :data="awardsData" v-model="target"
       @onstart="startRotation" @onstop="stopRotation"></tp-lottery>
 ```
+
 > onstart：转盘开始旋转，此时可以发起请求，获取所得奖品
+>
 > onstop：转盘停止转动，可以提示所得奖品并进行后续操作
 
 3、组件中注入数据

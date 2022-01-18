@@ -1,6 +1,6 @@
 {
   "name": "tp-lottery",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "private": false,
   "main": "lib/tp-lottery.umd.min.js",
   "keywords": ["vue", "lottery", "抽奖", "转盘"],
