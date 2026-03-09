@@ -217,7 +217,7 @@ export default {
     // 获取目标角度
     getTargetAngel() {
       let idx = this.mergedData.data.findIndex(item => {
-        return item.rewardId === this.mergedData.target
+        return item.id === this.mergedData.target
       })
       if (idx !== -1) {
         return (this.piece * (idx + 0.5) + this.startAngle) * 180 / Math.PI
